@@ -11,74 +11,56 @@ from ROOT import TRandom, TFile, TLorentzVector
 from ROOT.std import vector
 from array import array
 
+#input Parameters
+inFileName = sys.argv[1]	#file to read
+outFileName = sys.argv[2] 	#file to create
+ERRoad = sys.argv[3]		#libExRootAnalysis path
+Delphes = sys.argv[4]		#Delphes path
+ERRoad2 = sys.argv[5]		#ExRootTreeReader path
 
 
-
-Delphes_Path="/home/tomas/Documentos/MG5_aMC_v2_6_6/Delphes/"
+Delphes_Path= Delphes
 ROOT.gSystem.AddDynamicPath(Delphes_Path)
 ROOT.gSystem.Load("libDelphes.so");
 
-def GlobalAnalysisParser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--DIR', help='Directory to read input')
-    parser.add_argument('--XS', help='Sample cross section')
-    parser.add_argument('--LUMI', help='Luminosity [pb-1]')
-    parser.add_argument('--MLL', help='Minimum mll')
-    parser.add_argument('--MET', help='Minimum met')
-    parser.add_argument('--OUT', help='ROOT output file')
-    parser.add_argument('--ANA', help='Analysis selector')
-    parser.add_argument('--DELPHES', help='Delphes libraries location')
-    return parser.parse_args()
-
-args = GlobalAnalysisParser()
 
 
 
 
 
 
-
-
-ER_Path="/home/tomas/Documentos/MG5_aMC_v2_6_6/ExRootAnalysis/"
+ER_Path=ERRoad
 ROOT.gSystem.AddDynamicPath(ER_Path)
 ROOT.gSystem.Load("libExRootAnalysis.so");
 
 try:
-    ROOT.gInterpreter.Declare('#include "/home/tomas/Documentos/MG5_aMC_v2_6_6/Delphes/classes/DelphesClasses.h"')
-    ROOT.gInterpreter.Declare('#include "/home/tomas/Documentos/MG5_aMC_v2_6_6/ExRootAnalysis/ExRootAnalysis/ExRootTreeReader.h"')
+    ROOT.gInterpreter.Declare('#include "{}/classes/DelphesClasses.h"'.format(Delphes))
+    ROOT.gInterpreter.Declare('#include "{}/ExRootTreeReader.h"'.format(ERRoad2))
     print "Delphes classes imported"
 except:
     pass
 
 
-#def BasketFile(FileName=args.OUT, OpenOption="RECREATE"):
-    #try:
-    #    if args.OUT is None: raise NameError('No file name was declared, please do!')
-    #except NameError:
-    #    raise
-    #return ROOT.TFile(FileName, OpenOption)
 
-
-
-inFileName = sys . argv [1]
 
 
 fs = ROOT.TFile(inFileName)
-#fs = ROOT.TFile("/home/tomas/Documentos/MG5_aMC_v2_6_6/pp2w+w-_13TeV/Events/run_01/tag_1_delphes_events.root")
 s = fs.Get("Delphes")
 otree = ROOT.ExRootTreeReader(s)
-#Numero de eventos
+#Number of events
 ns = s.GetEntries()
-#Carga las Ramas de Jets, Electrones y Muones del arbol de Delphes
+#Charge branches of Jets, electrons, Muons, and Missing Energy
 jet = otree.UseBranch("Jet")
 electron = otree.UseBranch("Electron")
 muon = otree.UseBranch("Muon")
 met = otree.UseBranch("MissingET")
 
-myfile = TFile( "/home/tomas/Documentos/Python Notebooks/NewTree3.root", 'RECREATE' )
+#Creates a New file, and a tree inside it
+myfile = TFile( outFileName, 'RECREATE' )
 NewTree1 = ROOT.TTree( 'SystemTree', 'Arbol Deshojado' )
 
-                
+
+#Declares a the branches of the first 4 Jets, 2 electrons, 2 Muons, and 3 leafs for the Missing Energy                
 Jet1 = ROOT.TLorentzVector(0,0,0,0)
 Jet2 = ROOT.TLorentzVector(0,0,0,0)
 Jet3 = ROOT.TLorentzVector(0,0,0,0)
@@ -122,22 +104,19 @@ NewTree1.Branch( 'METNRGT', METNRGT,'METNRGT/F' )
 NewTree1.Branch( 'METPhi', METPhi, 'METPhi/F' )
 NewTree1.Branch( 'METEta', METEta, 'METEta/F')
 
-NewTree1.Branch( 'b-Jet1' , b_Jet1, 'b-Jet1/F')
-NewTree1.Branch( 'b-Jet2' , b_Jet2, 'b-Jet2/F')
-NewTree1.Branch( 'b-Jet3' , b_Jet3, 'b-Jet3/F')
-NewTree1.Branch( 'b-Jet4' , b_Jet4, 'b-Jet4/F')
+NewTree1.Branch( 'b_Jet1Tag' , b_Jet1, 'b_Jet1Tag/F')
+NewTree1.Branch( 'b_Jet2Tag' , b_Jet2, 'b_Jet2Tag/F')
+NewTree1.Branch( 'b_Jet3Tag' , b_Jet3, 'b_Jet3Tag/F')
+NewTree1.Branch( 'b_Jet4Tag' , b_Jet4, 'b_Jet4Tag/F')
+
+NewTree1.Branch( 'Tau_Jet1Tag' , Tau_Jet1, 'Tau_Jet1Tag/F')
+NewTree1.Branch( 'Tau_Jet2Tag' , Tau_Jet2, 'Tau_Jet2Tag/F')
+NewTree1.Branch( 'Tau_Jet3Tag' , Tau_Jet3, 'Tau_Jet3Tag/F')
+NewTree1.Branch( 'Tau_Jet4Tag' , Tau_Jet4, 'Tau_Jet4Tag/F')
 
 
 
-
-
-
-NewTree1.Branch( 'Tau-Jet1' , Tau_Jet1, 'Tau-Jet1/F')
-NewTree1.Branch( 'Tau-Jet2' , Tau_Jet2, 'Tau-Jet2/F')
-NewTree1.Branch( 'Tau-Jet3' , Tau_Jet3, 'Tau-Jet3/F')
-NewTree1.Branch( 'Tau-Jet4' , Tau_Jet4, 'Tau-Jet4/F')
-
-
+#Loop for filling the New tree
 for event in range(ns):
     otree.ReadEntry(event)
     
@@ -196,8 +175,8 @@ for event in range(ns):
 	Tau_Jet1[0] = jet.At(0).TauTag
 	Tau_Jet2[0] = jet.At(1).TauTag
 	Tau_Jet3[0] = jet.At(2).TauTag
-	Tau_Jet4[0] = -3        
-
+	Tau_Jet4[0] = -3   
+        
     if jet.GetEntries() >= 4:
         Jet1.SetPtEtaPhiM(jet.At(0).PT,jet.At(0).Eta,jet.At(0).Phi,jet.At(0).Mass)
         Jet2.SetPtEtaPhiM(jet.At(1).PT,jet.At(1).Eta,jet.At(1).Phi,jet.At(1).Mass)
@@ -211,6 +190,7 @@ for event in range(ns):
 	Tau_Jet2[0] = jet.At(1).TauTag
 	Tau_Jet3[0] = jet.At(2).TauTag
 	Tau_Jet4[0] = jet.At(3).TauTag
+    
     
     
     if muon.GetEntries() == 0:
@@ -249,5 +229,6 @@ for event in range(ns):
     
     NewTree1.Fill()
 
+#Writing and closing the files
 NewTree1.Write()
-args.OUT.Close()
+myfile.Close()
